@@ -88,4 +88,74 @@ function render(page='dashboard'){
  }
 }
 document.addEventListener('click',e=>{const del=e.target.closest('[data-event-delete]');if(del){events=events.filter(x=>x.id!==del.dataset.eventDelete);store.set('events',events);render('calendar');}});
+
 saveAll();go('dashboard');
+
+// Interactive command center: focus timer, command palette and visual mode.
+const extras = document.createElement('div');
+extras.innerHTML = `
+  <div class="quick-dock">
+    <button class="dock-btn" id="focus-open" title="Start a focus session (F)">◷ <span>Focus</span></button>
+    <button class="dock-btn" id="command-open" title="Open command palette (Ctrl/⌘ K)">⌘ <span>Quick actions</span></button>
+    <button class="dock-btn dock-theme" id="theme-toggle" title="Toggle glow mode">✧</button>
+  </div>
+  <div class="modal-backdrop" id="focus-modal" hidden>
+    <section class="utility-modal focus-modal">
+      <button class="modal-close" data-close="focus-modal" aria-label="Close">×</button>
+      <div class="eyebrow">DEEP WORK SESSION</div><h2>Focus mode</h2>
+      <p class="modal-sub">One thing at a time. Make it count.</p>
+      <div class="timer-ring"><div><strong id="focus-clock">25:00</strong><small id="focus-state">READY WHEN YOU ARE</small></div></div>
+      <div class="timer-presets">
+        <button data-minutes="15">15 min</button><button class="selected" data-minutes="25">25 min</button><button data-minutes="50">50 min</button>
+      </div>
+      <div class="timer-actions"><button class="primary-btn" id="focus-start">Start focus</button><button class="secondary-btn" id="focus-reset">Reset</button></div>
+      <p class="focus-tip">Tip: silence notifications and choose one small goal.</p>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="command-modal" hidden>
+    <section class="utility-modal command-modal">
+      <button class="modal-close" data-close="command-modal" aria-label="Close">×</button>
+      <div class="eyebrow">COMMAND PALETTE · CTRL K</div><h2>What do you want to do?</h2>
+      <input id="command-search" class="command-search" placeholder="Search pages and actions…" autocomplete="off">
+      <div class="command-list" id="command-list">
+        <button data-go="dashboard"><span>⌂</span> Open overview <kbd>G</kbd></button>
+        <button data-go="tasks"><span>✓</span> Open tasks <kbd>T</kbd></button>
+        <button data-go="calendar"><span>▦</span> Open calendar <kbd>C</kbd></button>
+        <button data-go="notes"><span>▤</span> Open notes <kbd>N</kbd></button>
+        <button data-go="projects"><span>◇</span> Open projects <kbd>P</kbd></button>
+        <button data-action="focus"><span>◷</span> Start a focus session <kbd>F</kbd></button>
+      </div>
+      <small class="command-hint">↑ ↓ to browse · Enter to select · Esc to close</small>
+    </section>
+  </div>
+  <div class="toast" id="app-toast" role="status"></div>`;
+document.body.append(extras);
+
+let focusMinutes = 25, focusRemaining = 1500, focusInterval = null, focusRunning = false;
+const focusModal = $('#focus-modal'), commandModal = $('#command-modal');
+const toast = (message) => { const el=$('#app-toast'); el.textContent=message; el.classList.add('show'); clearTimeout(el._hide); el._hide=setTimeout(()=>el.classList.remove('show'),2200); };
+const showModal = (el) => { el.hidden=false; document.body.classList.add('modal-open'); };
+const hideModal = (el) => { el.hidden=true; if(focusModal.hidden && commandModal.hidden) document.body.classList.remove('modal-open'); };
+function paintTimer(){ $('#focus-clock').textContent=String(Math.floor(focusRemaining/60)).padStart(2,'0')+':'+String(focusRemaining%60).padStart(2,'0'); $('#focus-state').textContent=focusRunning?'SESSION IN PROGRESS':'READY WHEN YOU ARE'; }
+function resetTimer(){clearInterval(focusInterval);focusInterval=null;focusRunning=false;focusRemaining=focusMinutes*60;$('#focus-start').textContent='Start focus';paintTimer();}
+function startFocus(){if(focusRunning){clearInterval(focusInterval);focusRunning=false;$('#focus-start').textContent='Resume focus';paintTimer();return;}focusRunning=true;$('#focus-start').textContent='Pause';paintTimer();focusInterval=setInterval(()=>{focusRemaining--;paintTimer();if(focusRemaining<=0){clearInterval(focusInterval);focusRunning=false;$('#focus-start').textContent='Start again';$('#focus-state').textContent='SESSION COMPLETE · NICE WORK';toast('Focus session complete. Great work!');}},1000);}
+$('#focus-open').addEventListener('click',()=>showModal(focusModal));
+$('#focus-start').addEventListener('click',startFocus);
+$('#focus-reset').addEventListener('click',resetTimer);
+document.querySelectorAll('[data-minutes]').forEach(b=>b.addEventListener('click',()=>{focusMinutes=Number(b.dataset.minutes);document.querySelectorAll('[data-minutes]').forEach(x=>x.classList.toggle('selected',x===b));resetTimer();}));
+$('#command-open').addEventListener('click',()=>{showModal(commandModal);$('#command-search').value='';filterCommands('');$('#command-search').focus();});
+$('#theme-toggle').addEventListener('click',()=>{document.body.classList.toggle('aurora-mode');toast(document.body.classList.contains('aurora-mode')?'Aurora glow enabled':'Classic mode enabled');});
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>hideModal($('#'+b.dataset.close))));
+[focusModal,commandModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModal(m);}));
+function filterCommands(q){const term=q.toLowerCase();document.querySelectorAll('#command-list button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(term));}
+$('#command-search').addEventListener('input',e=>filterCommands(e.target.value));
+$('#command-list').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;hideModal(commandModal);if(b.dataset.go)go(b.dataset.go);if(b.dataset.action==='focus')showModal(focusModal);});
+document.addEventListener('keydown',e=>{
+ const tag=document.activeElement?.tagName;
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();showModal(commandModal);$('#command-search').value='';filterCommands('');$('#command-search').focus();return;}
+ if(e.key==='Escape'){hideModal(focusModal);hideModal(commandModal);return;}
+ if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;
+ const key=e.key.toLowerCase();
+ if(key==='f'){showModal(focusModal);}
+ if(key==='g')go('dashboard'); if(key==='t')go('tasks'); if(key==='c')go('calendar'); if(key==='n')go('notes'); if(key==='p')go('projects');
+});
