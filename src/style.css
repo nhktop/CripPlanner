@@ -448,3 +448,18 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .welcome-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 @media(max-width:1100px){.task-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.task-form{grid-template-columns:1fr 1fr}.welcome-actions{align-items:flex-start}.welcome-actions .date-chip{display:none}}
+
+
+/* TASK DETAIL + XP REWARDS */
+.points-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #8bdfff55;border-radius:999px;background:linear-gradient(110deg,#123c59,#30204f);color:#a9efff;font-size:11px;font-weight:800;box-shadow:0 0 22px #57caff20}
+.task-row[data-open-task]{cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.task-row[data-open-task]:hover{background:linear-gradient(100deg,#248fc52a,#865de52a);border-color:#79dfff55;transform:translateX(3px)}
+.task-row[data-open-task]:focus-visible{outline:2px solid #7deaff;outline-offset:3px}
+.task-detail-modal{width:min(520px,calc(100vw - 32px));padding:30px;position:relative}
+.task-detail-modal h2{margin:10px 34px 8px 0;font:800 25px 'Manrope',sans-serif;overflow-wrap:anywhere}
+.task-detail-modal .muted{font-size:12px}
+.task-detail-priority{display:inline-flex;margin-top:8px;padding:6px 10px;border:1px solid #8bceff35;border-radius:8px;background:#17304d;color:#a9dcff;font-size:9px;font-weight:800;letter-spacing:1px}
+.task-detail-description{margin:18px 0;color:#b4c7e1;font-size:13px;line-height:1.6;white-space:pre-wrap}
+.task-reward{display:flex;align-items:center;gap:9px;margin:20px 0;padding:15px;border:1px solid #a98aff55;border-radius:12px;background:linear-gradient(110deg,#2b2860aa,#17425aaa);color:#b8f3ff;font-size:15px;font-weight:800;box-shadow:0 0 25px #7e68ff16}
+.task-detail-modal .primary-btn{width:100%;min-height:46px}
+@media(max-width:620px){.points-pill{padding:7px 9px;font-size:10px}.task-detail-modal{padding:23px}}
