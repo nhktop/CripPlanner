@@ -10,6 +10,7 @@ let notes = store.get('notes', '');
 let events = store.get('events', []);
 let projects = store.get('projects', []);
 let activeDay = new Date().toISOString().slice(0,10);
+let currentPage = 'dashboard';
 const icons = { dashboard:'⌂', tasks:'✓', calendar:'▦', notes:'▤', projects:'◇' };
 
 $('#root').innerHTML = `
@@ -50,10 +51,10 @@ function weather() {
   }, () => $('#weather').innerHTML='<span class="weather-icon">☀</span><div><strong>Location not shared</strong><small>Allow location for local weather</small></div>', {timeout:8000});
 }
 function saveAll(){store.set('tasks',tasks);store.set('events',events);store.set('projects',projects);$('#task-count').textContent=tasks.filter(t=>!t.done).length;}
-function go(page){$('.nav-item.active')?.classList.remove('active');$(`[data-page="${page}"]`)?.classList.add('active');$('#crumb').textContent=page.toUpperCase();render(page);}
+function go(page){currentPage=page;$('.nav-item.active')?.classList.remove('active');$(`[data-page="${page}"]`)?.classList.add('active');$('#crumb').textContent=page.toUpperCase();render(page);}
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-page]'); if(nav) go(nav.dataset.page);
- const done=e.target.closest('[data-done]'); if(done){const t=tasks.find(x=>x.id===done.dataset.done);if(t)t.done=!t.done;saveAll();render('tasks');}
+ const done=e.target.closest('[data-done]'); if(done){const t=tasks.find(x=>x.id===done.dataset.done);if(t)t.done=!t.done;saveAll();render(currentPage);}
  const del=e.target.closest('[data-delete]');if(del){tasks=tasks.filter(x=>x.id!==del.dataset.delete);saveAll();render('tasks');}
  const pdel=e.target.closest('[data-project-delete]');if(pdel){projects=projects.filter(x=>x.id!==pdel.dataset.projectDelete);saveAll();render('projects');}
 });
@@ -62,12 +63,13 @@ function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt
 function taskForm(){return `<form id="task-form" class="add-form"><input name="title" placeholder="What needs to get done?" required maxlength="100"><input name="date" type="date" aria-label="Due date"><input name="time" type="time" aria-label="Time"><select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select><button class="primary-btn">Add task +</button></form>`;}
 function render(page='dashboard'){
  const open=tasks.filter(t=>!t.done), done=tasks.filter(t=>t.done);
+ const completion=tasks.length?Math.round(done.length/tasks.length*100):0;
  if(page==='dashboard'){
  $('#page').innerHTML=`
  <div class="welcome"><div><div class="eyebrow">YOUR PERSONAL CONTROL PANEL</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}.</h1><p>Everything you need, in one place.</p></div><div class="date-chip">✦ &nbsp;${dateLong()}</div></div>
  <div class="hero-grid"><div class="clock-card"><div class="card-kicker">LOCAL TIME <span class="live-pill">● LIVE</span></div><div class="clock" id="clock">--:--:--</div><div id="clock-date" class="muted"></div></div><div class="weather-card"><div class="card-kicker">WEATHER</div><div id="weather" class="weather-content"><span class="weather-icon">◌</span><div><strong>Checking weather…</strong><small>Using your device location</small></div></div><small class="muted">Powered by Open-Meteo</small></div></div>
  <div class="stats-grid"><div class="stat-card"><span>OPEN TASKS</span><strong>${open.length}</strong><small>Ready when you are</small></div><div class="stat-card"><span>COMPLETED</span><strong>${done.length}</strong><small>Nice progress</small></div><div class="stat-card"><span>PROJECTS</span><strong>${projects.length}</strong><small>Things in motion</small></div></div>
- <div class="content-grid"><div class="panel"><div class="panel-head"><div><h2>Today's focus</h2><p>Your next things to do</p></div><button class="text-btn" data-page="tasks">All tasks ↗</button></div>${open.slice(0,4).map(taskMarkup).join('')||'<div class="empty">You are all caught up. Add a task when you need one.</div>'}</div><div class="panel"><div class="panel-head"><div><h2>Quick note</h2><p>Ideas worth keeping</p></div><button class="text-btn" data-page="notes">Open notes ↗</button></div><textarea id="dash-note" class="note-area" placeholder="Write something down…">${esc(notes)}</textarea><div class="save-hint" id="note-status">Saved on this device</div></div></div>`;
+ <div class="progress-panel"><div class="progress-copy"><div class="eyebrow">MISSION PROGRESS</div><h2>Your momentum</h2><p>${done.length} of ${tasks.length} tasks completed. Keep your streak moving.</p><div class="progress-track"><span style="width:${completion}%"></span></div></div><div class="progress-ring" style="--progress:${completion}%"><strong>${completion}%</strong><small>COMPLETE</small></div></div><div class="content-grid"><div class="panel"><div class="panel-head"><div><h2>Today's focus</h2><p>Your next things to do</p></div><button class="text-btn" data-page="tasks">All tasks ↗</button></div>${open.slice(0,4).map(taskMarkup).join('')||'<div class="empty">You are all caught up. Add a task when you need one.</div>'}</div><div class="panel"><div class="panel-head"><div><h2>Quick note</h2><p>Ideas worth keeping</p></div><button class="text-btn" data-page="notes">Open notes ↗</button></div><textarea id="dash-note" class="note-area" placeholder="Write something down…">${esc(notes)}</textarea><div class="save-hint" id="note-status">Saved on this device</div></div></div>`;
  timeNow();weather();$('#dash-note').addEventListener('input',e=>{notes=e.target.value;store.set('notes',notes);$('#note-status').textContent='Saved';});
  } else if(page==='tasks'){
  $('#page').innerHTML=`<div class="page-heading"><div><div class="eyebrow">STAY ON TRACK</div><h1>Tasks</h1><p>Plan it, do it, tick it off.</p></div><div class="count-chip">${open.length} OPEN</div></div><div class="panel"><div class="panel-head"><div><h2>Add a task</h2><p>Set a due date, time and priority</p></div></div>${taskForm()}</div><div class="panel task-panel"><div class="panel-head"><div><h2>To do</h2><p>${open.length} tasks remaining</p></div></div>${open.map(taskMarkup).join('')||'<div class="empty">No open tasks. Enjoy the breathing room.</div>'}</div><div class="panel task-panel"><div class="panel-head"><div><h2>Completed</h2><p>${done.length} finished</p></div></div>${done.map(taskMarkup).join('')||'<div class="empty">Completed tasks will appear here.</div>'}</div>`;
@@ -130,6 +132,7 @@ extras.innerHTML = `
   </div>
   <div class="toast" id="app-toast" role="status"></div>`;
 document.body.append(extras);
+document.body.insertAdjacentHTML('afterbegin', '<div class="ambient-fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>');
 
 let focusMinutes = 25, focusRemaining = 1500, focusInterval = null, focusRunning = false;
 const focusModal = $('#focus-modal'), commandModal = $('#command-modal');
