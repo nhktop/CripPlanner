@@ -473,3 +473,14 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .stop-repeat-btn:hover{border-color:#ff9bc9;background:linear-gradient(110deg,#63304e,#44285f)}
 @media(max-width:1100px){.task-form{grid-template-columns:repeat(3,minmax(0,1fr))}.task-form .repeat-option{justify-self:start}}
 @media(max-width:620px){.task-form{grid-template-columns:1fr 1fr}.task-form>input:first-child,.task-form .repeat-option,.task-form>button{grid-column:1/-1}.task-form .repeat-option{justify-self:start}}
+
+/* Daily streak, due-day notifications and task cancellation */
+.streak-strip,.notification-panel{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 16px;padding:19px 22px;border:1px solid rgba(126,211,255,.3);border-radius:16px;background:linear-gradient(110deg,rgba(15,45,75,.9),rgba(35,23,70,.9));}
+.streak-strip>div:first-child{display:grid;gap:5px}.streak-strip strong{font:800 23px 'Manrope',sans-serif;color:#ffcf83}.streak-strip small,.notification-panel small{display:block;color:#9fb6d5;font-size:11px}
+.streak-calendar{display:flex;gap:6px}.streak-calendar span{display:grid;place-items:center;min-width:36px;height:36px;padding:0 5px;border:1px solid #85a9d52b;border-radius:9px;color:#8fa8c9;font-size:9px}
+.streak-calendar span.hit{border-color:#ffbf6877;background:#ffb84a22;color:#ffd99e;box-shadow:0 0 14px #ffb84a20}
+.notification-panel>div{display:grid;gap:5px}.notification-panel strong{color:#eaf7ff;font-size:13px}
+.cancel-task-btn{width:100%;margin-top:9px;border-color:#f0a06b66;background:linear-gradient(110deg,#492c32,#35234b);color:#ffd0ad}
+.cancel-task-btn:hover{border-color:#ffb47d;background:linear-gradient(110deg,#633b3e,#482b58)}
+.task-row.is-cancelled{opacity:.62}.task-row.is-cancelled .task-info strong{text-decoration:line-through}
+@media(max-width:700px){.streak-strip,.notification-panel{align-items:flex-start;flex-direction:column}.streak-calendar{flex-wrap:wrap}}
