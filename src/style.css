@@ -520,3 +520,13 @@ body[data-theme="aurora"]{--bg:#071014;--surface:#101c22;--surface-2:#15262b;--p
 .subject-stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
 .subject-stats span{display:flex;gap:8px;align-items:center;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.035);font-size:10px}
 .subject-stats b{color:#d9d0f5;font-weight:600}.subject-stats small{color:var(--muted)}
+
+/* Homework capture and one-click rescheduling */
+.homework-capture{margin-bottom:15px;border-color:rgba(121,206,255,.38);background:linear-gradient(130deg,rgba(30,48,83,.92),rgba(31,24,65,.92))}
+.homework-form{display:grid;grid-template-columns:minmax(180px,2fr) repeat(3,minmax(130px,1fr)) auto;gap:10px;align-items:end}
+.homework-form>input,.homework-form label input,.homework-form label select{width:100%;min-width:0;padding:11px 12px;border:1px solid #78bfff35;border-radius:10px;background:#09172d;color:#eef8ff}
+.homework-form label{display:grid;gap:6px;color:#9db8d9;font-size:11px}
+.switch-time-btn{padding:7px 10px;white-space:nowrap;font-size:10px;border:1px solid #8d8aff66;border-radius:9px;background:linear-gradient(110deg,#29245a,#17415a);color:#d9eaff;cursor:pointer}
+.switch-time-btn:hover{border-color:#8cecff;background:linear-gradient(110deg,#3a3279,#1b5570)}
+@media(max-width:1000px){.homework-form{grid-template-columns:repeat(2,minmax(0,1fr))}.homework-form>input{grid-column:1/-1}}
+@media(max-width:620px){.homework-form{grid-template-columns:1fr}.homework-form>input{grid-column:auto}}
