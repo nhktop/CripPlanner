@@ -363,3 +363,30 @@ body.aurora-mode{background:radial-gradient(ellipse at 12% 5%,#38bfe42d,transpar
 body.aurora-mode .brand-mark{background:linear-gradient(140deg,#a3f4ff,#4c9ce9)}body.aurora-mode .primary-btn{background:linear-gradient(120deg,#45cde9,#4e91ec,#7d73ed)}
 @media(max-width:700px){.ambient-fx i:nth-child(n+6){display:none}.progress-panel{padding:18px;gap:14px}.progress-ring{flex-basis:68px;width:68px}.day{height:42px;border-radius:9px}}
 @media(prefers-reduced-motion:reduce){body::before,.ambient-fx i{animation:none!important}}
+
+
+/* SKYBYTE FINAL PASS — stronger visible contrast and glass-orb atmosphere */
+html,body,#root{min-height:100%;background-color:#050a17}
+body{background-image:radial-gradient(ellipse at 12% 12%,rgba(39,190,255,.22),transparent 34%),radial-gradient(ellipse at 88% 18%,rgba(155,91,255,.25),transparent 35%),radial-gradient(ellipse at 52% 100%,rgba(34,107,210,.19),transparent 48%),linear-gradient(135deg,#050916 0%,#09152b 52%,#100b25 100%)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.22;background-image:linear-gradient(rgba(109,184,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(109,184,255,.08) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
+.ambient-fx{z-index:0;overflow:hidden}
+.ambient-fx i{width:clamp(58px,7vw,112px);border:1px solid rgba(132,231,255,.48);background:radial-gradient(circle at 29% 25%,rgba(255,255,255,.48),rgba(112,218,255,.17) 18%,rgba(74,151,255,.075) 48%,rgba(157,103,255,.07) 72%,transparent 74%);box-shadow:inset 0 0 25px rgba(116,225,255,.23),0 0 32px rgba(82,185,255,.18),0 0 70px rgba(151,101,255,.10);opacity:.88}
+.ambient-fx i:nth-child(1){width:112px}.ambient-fx i:nth-child(2){width:64px}.ambient-fx i:nth-child(3){width:82px}.ambient-fx i:nth-child(4){width:136px}.ambient-fx i:nth-child(5){width:72px}.ambient-fx i:nth-child(6){width:48px}.ambient-fx i:nth-child(7){width:96px}.ambient-fx i:nth-child(8){width:58px}.ambient-fx i:nth-child(9){width:42px}
+.app-shell{z-index:1;background:transparent}
+.sidebar{background:linear-gradient(180deg,rgba(5,14,32,.97),rgba(8,11,29,.95));border-right:1px solid rgba(103,207,255,.28);box-shadow:16px 0 70px rgba(0,0,0,.35),inset -1px 0 rgba(157,121,255,.15)}
+.brand-mark{border-radius:14px;background:linear-gradient(145deg,#b4f5ff 0%,#50b9f3 38%,#765cf0 72%,#b27aff 100%);box-shadow:0 0 25px rgba(85,210,255,.5),0 0 55px rgba(143,94,255,.24),inset 0 1px 0 #fff}
+.topbar{backdrop-filter:blur(18px);background:rgba(5,12,27,.54);border-bottom:1px solid rgba(120,204,255,.22)}
+.welcome h1,.page-heading h1{letter-spacing:-1.8px;text-shadow:0 0 32px rgba(88,193,255,.18)}
+.clock-card,.weather-card,.panel,.stat-card,.project-card{border:1px solid rgba(121,206,255,.29);background:linear-gradient(145deg,rgba(15,34,63,.94),rgba(10,15,37,.96));box-shadow:0 20px 56px rgba(0,0,0,.34),0 0 28px rgba(68,163,255,.09),inset 0 1px 0 rgba(218,243,255,.11);backdrop-filter:blur(20px)}
+.clock-card{border-color:rgba(112,225,255,.42);background:radial-gradient(circle at 82% 0%,rgba(56,195,255,.31),transparent 45%),radial-gradient(circle at 100% 100%,rgba(161,99,255,.27),transparent 48%),linear-gradient(135deg,#102d50,#151039)}
+.weather-card{background:radial-gradient(circle at 100% 0%,rgba(151,101,255,.25),transparent 48%),linear-gradient(145deg,#102744,#11142f)}
+.stat-card{position:relative;overflow:hidden}
+.stat-card::after,.panel::after,.project-card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(125deg,rgba(117,226,255,.055),transparent 35%,rgba(167,116,255,.045));opacity:.8}
+.stat-card strong{font-size:clamp(30px,3vw,42px);text-shadow:0 0 24px rgba(83,207,255,.22)}
+.progress-panel{border-color:rgba(117,220,255,.42);background:linear-gradient(110deg,rgba(12,44,75,.96),rgba(28,19,65,.96));box-shadow:0 18px 50px rgba(0,0,0,.3),0 0 34px rgba(83,174,255,.13),inset 0 1px rgba(255,255,255,.13)}
+.primary-btn{background:linear-gradient(110deg,#27c5ec,#477cf2 52%,#a05bf2);border:1px solid rgba(183,240,255,.7);box-shadow:0 10px 30px rgba(63,157,255,.28),0 0 25px rgba(132,95,255,.18),inset 0 1px rgba(255,255,255,.55)}
+.primary-btn:active,.dock-btn:active{transform:translateY(1px) scale(.98)}
+.nav-item.active{background:linear-gradient(100deg,rgba(38,174,230,.28),rgba(126,83,235,.28));border-color:rgba(121,224,255,.5);box-shadow:inset 3px 0 #79edff,0 0 28px rgba(71,171,255,.19)}
+.quick-dock{backdrop-filter:blur(24px);border-color:rgba(120,220,255,.5);box-shadow:0 20px 65px rgba(0,0,0,.55),0 0 40px rgba(68,171,255,.2)}
+@media(max-width:700px){.ambient-fx i{opacity:.42}.ambient-fx i:nth-child(n+6){display:none}}
+@media(prefers-reduced-motion:reduce){.ambient-fx i{animation:none!important}}
