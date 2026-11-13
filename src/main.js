@@ -6,6 +6,8 @@ const store = {
   set(key, value) { localStorage.setItem('nhk-'+key, JSON.stringify(value)); }
 };
 let tasks = store.get('tasks', []);
+let points = Number(store.get('points', 0)) || 0;
+let selectedTaskId = null;
 let notes = store.get('notes', '');
 let events = store.get('events', []);
 let projects = store.get('projects', []);
@@ -33,7 +35,7 @@ $('#root').innerHTML = `
     <div class="sidebar-bottom"><div class="profile-dot">N</div><div><strong>Personal space</strong><small>All systems ready</small></div><span class="online-dot"></span></div>
   </aside>
   <main class="main">
-    <header class="topbar"><div class="breadcrumb">WORKSPACE <span>/</span> <b id="crumb">OVERVIEW</b></div><div class="top-actions"><span class="today-label" id="today-label"></span><span class="avatar">N</span></div></header>
+    <header class="topbar"><div class="breadcrumb">WORKSPACE <span>/</span> <b id="crumb">OVERVIEW</b></div><div class="top-actions"><span class="today-label" id="today-label"></span><span class="points-pill" id="points-pill">✦ 0 XP</span><span class="avatar">N</span></div></header>
     <section class="page" id="page"></section>
     <footer>NHK COMMAND CENTER <span>YOUR SPACE. YOUR FLOW.</span></footer>
   </main>
@@ -57,15 +59,21 @@ function weather() {
     } catch { const el=$('#weather');if(el)el.innerHTML='<span class="weather-icon">☁</span><div><strong>Weather unavailable</strong><small>Could not load forecast</small></div>'; }
   }, () => {const el=$('#weather');if(el)el.innerHTML='<span class="weather-icon">☀</span><div><strong>Location not shared</strong><small>Allow location for local weather</small></div>';}, {timeout:8000});
 }
-function saveAll(){store.set('tasks',tasks);store.set('events',events);store.set('projects',projects);store.set('plannerPrefs',plannerPrefs);$('#task-count').textContent=tasks.filter(t=>!t.done).length;}
+function saveAll(){store.set('tasks',tasks);store.set('events',events);store.set('projects',projects);store.set('plannerPrefs',plannerPrefs);$('#task-count').textContent=tasks.filter(t=>!t.done).length;const xp=$('#points-pill');if(xp)xp.textContent='✦ '+points+' XP';}
 function go(page){currentPage=page;$('.nav-item.active')?.classList.remove('active');$(`[data-page="${page}"]`)?.classList.add('active');$('#crumb').textContent=page.toUpperCase();render(page);}
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-page]'); if(nav) go(nav.dataset.page);
- const done=e.target.closest('[data-done]'); if(done){const t=tasks.find(x=>x.id===done.dataset.done);if(t)t.done=!t.done;saveAll();render(currentPage);}
+ const openTask=e.target.closest('[data-open-task]'); if(openTask){openTaskDetails(openTask.dataset.openTask);return;}
+ const complete=e.target.closest('[data-complete-task]'); if(complete){completeSelectedTask();return;}
+ const closeTask=e.target.closest('[data-close-task]'); if(closeTask){hideTaskDetails();return;}
  const del=e.target.closest('[data-delete]');if(del){tasks=tasks.filter(x=>x.id!==del.dataset.delete);saveAll();render('tasks');}
  const pdel=e.target.closest('[data-project-delete]');if(pdel){projects=projects.filter(x=>x.id!==pdel.dataset.projectDelete);saveAll();render('projects');}
 });
-function taskMarkup(t){return `<div class="task-row ${t.done?'is-done':''}"><button class="check ${t.done?'checked':''}" data-done="${t.id}">${t.done?'✓':''}</button><div class="task-info"><strong>${esc(t.title)}</strong><small>${t.date?new Date(t.date+'T12:00:00').toLocaleDateString([], {month:'short',day:'numeric'}):'No due date'} · ${esc(t.time||'Unscheduled')} · ${Number(t.duration)||30} min${t.source==='email'?' · EMAIL':''}</small></div><span class="priority ${t.priority||'normal'}">${t.priority||'normal'}</span><button class="icon-btn" data-delete="${t.id}" title="Delete task">×</button></div>`;}
+function taskMarkup(t){return `<div class="task-row ${t.done?'is-done':''}" data-open-task="${t.id}" role="button" tabindex="0" aria-label="Open task ${esc(t.title)}"><button class="check ${t.done?'checked':''}" data-open-task="${t.id}" title="Open task">${t.done?'✓':''}</button><div class="task-info"><strong>${esc(t.title)}</strong><small>${t.date?new Date(t.date+'T12:00:00').toLocaleDateString([], {month:'short',day:'numeric'}):'No due date'} · ${esc(t.time||'Unscheduled')} · ${Number(t.duration)||30} min${t.source==='email'?' · EMAIL':''}</small></div><span class="priority ${t.priority||'normal'}">${t.priority||'normal'}</span><button class="icon-btn" data-delete="${t.id}" title="Delete task">×</button></div>`;}
+function taskPoints(t){const mins=Number(t.duration)||30;return Math.max(5,Math.round(mins/15)*5)+(t.priority==='high'?5:0);}
+function openTaskDetails(id){const t=tasks.find(x=>x.id===id);if(!t)return;selectedTaskId=id;const modal=$('#task-detail-modal');$('#task-detail-title').textContent=t.title;$('#task-detail-meta').textContent=(t.date?new Date(t.date+'T12:00:00').toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'}):'No due date')+' · '+(t.time||'Unscheduled')+' · '+(Number(t.duration)||30)+' min';$('#task-detail-priority').textContent=(t.priority||'normal').toUpperCase()+' PRIORITY';$('#task-detail-description').textContent=t.details||'No extra details for this task.';$('#task-detail-reward').textContent=t.done?'Already completed':`+${taskPoints(t)} points`;$('#task-detail-complete').hidden=!!t.done;$('#task-detail-complete').textContent='Complete task · +'+taskPoints(t)+' points';modal.hidden=false;document.body.classList.add('modal-open');}
+function hideTaskDetails(){const modal=$('#task-detail-modal');if(modal)modal.hidden=true;selectedTaskId=null;if(focusModal.hidden&&commandModal.hidden)document.body.classList.remove('modal-open');}
+function completeSelectedTask(){const t=tasks.find(x=>x.id===selectedTaskId);if(!t||t.done)return;const earned=taskPoints(t);t.done=true;t.pointsAwarded=earned;points+=earned;store.set('points',points);saveAll();hideTaskDetails();render(currentPage);toast(`Task completed! +${earned} points · Total: ${points}`);}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function taskForm(){return `<form id="task-form" class="add-form task-form"><input name="title" placeholder="What needs to get done?" required maxlength="100"><input name="date" type="date" aria-label="Due date"><input name="time" type="time" aria-label="Preferred start time"><select name="duration" aria-label="Estimated duration"><option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="180">3 hours</option></select><select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select><button class="primary-btn">Add task +</button></form>`;}
 function addEventFromForm(form){const f=new FormData(form);events.push({id:crypto.randomUUID(),title:f.get('title'),time:f.get('time'),date:activeDay,duration:Number(f.get('duration'))||60});store.set('events',events);render('calendar');}
@@ -128,7 +136,7 @@ function render(page='dashboard'){
  $('#page').innerHTML=`
  <div class="welcome"><div><div class="eyebrow">YOUR PERSONAL CONTROL PANEL</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}.</h1><p>Everything you need, in one place.</p></div><div class="welcome-actions"><button class="primary-btn" data-page="smart-plan">✦ Plan my day</button><div class="date-chip">✦ &nbsp;${dateLong()}</div></div></div>
  <div class="hero-grid"><div class="clock-card"><div class="card-kicker">LOCAL TIME <span class="live-pill">● LIVE</span></div><div class="clock" id="clock">--:--:--</div><div id="clock-date" class="muted"></div></div><div class="weather-card"><div class="card-kicker">WEATHER</div><div id="weather" class="weather-content"><span class="weather-icon">◌</span><div><strong>Checking weather…</strong><small>Using your device location</small></div></div><small class="muted">Powered by Open-Meteo</small></div></div>
- <div class="stats-grid"><div class="stat-card"><span>OPEN TASKS</span><strong>${open.length}</strong><small>Ready when you are</small></div><div class="stat-card"><span>COMPLETED</span><strong>${done.length}</strong><small>Nice progress</small></div><div class="stat-card"><span>PROJECTS</span><strong>${projects.length}</strong><small>Things in motion</small></div></div>
+ <div class="stats-grid"><div class="stat-card"><span>POINTS EARNED</span><strong>${points}</strong><small>Keep building momentum</small></div><div class="stat-card"><span>OPEN TASKS</span><strong>${open.length}</strong><small>Ready when you are</small></div><div class="stat-card"><span>COMPLETED</span><strong>${done.length}</strong><small>Nice progress</small></div><div class="stat-card"><span>PROJECTS</span><strong>${projects.length}</strong><small>Things in motion</small></div></div>
  <div class="progress-panel"><div class="progress-copy"><div class="eyebrow">MISSION PROGRESS</div><h2>Your momentum</h2><p>${done.length} of ${tasks.length} tasks completed. Keep your streak moving.</p><div class="progress-track"><span style="width:${completion}%"></span></div></div><div class="progress-ring" style="--progress:${completion}%"><strong>${completion}%</strong><small>COMPLETE</small></div></div><div class="content-grid"><div class="panel"><div class="panel-head"><div><h2>Today's focus</h2><p>Your next things to do</p></div><button class="text-btn" data-page="tasks">All tasks ↗</button></div>${open.slice(0,4).map(taskMarkup).join('')||'<div class="empty">You are all caught up. Add a task when you need one.</div>'}</div><div class="panel"><div class="panel-head"><div><h2>Quick note</h2><p>Ideas worth keeping</p></div><button class="text-btn" data-page="notes">Open notes ↗</button></div><textarea id="dash-note" class="note-area" placeholder="Write something down…">${esc(notes)}</textarea><div class="save-hint" id="note-status">Saved on this device</div></div></div>`;
  timeNow();weather();$('#dash-note').addEventListener('input',e=>{notes=e.target.value;store.set('notes',notes);$('#note-status').textContent='Saved';});
  } else if(page==='tasks'){
@@ -217,7 +225,7 @@ extras.innerHTML = `
       <small class="command-hint">↑ ↓ to browse · Enter to select · Esc to close</small>
     </section>
   </div>
-  <div class="toast" id="app-toast" role="status"></div>`;
+  <div class="modal-backdrop task-detail-backdrop" id="task-detail-modal" hidden><section class="utility-modal task-detail-modal"><button class="modal-close" data-close-task aria-label="Close">×</button><div class="eyebrow">TASK DETAILS</div><h2 id="task-detail-title"></h2><p id="task-detail-meta" class="muted"></p><span class="task-detail-priority" id="task-detail-priority"></span><p id="task-detail-description" class="task-detail-description"></p><div class="task-reward">✦ <span id="task-detail-reward"></span></div><button class="primary-btn" id="task-detail-complete" data-complete-task>Complete task</button></section></div><div class="toast" id="app-toast" role="status"></div>`;
 document.body.append(extras);
 document.body.insertAdjacentHTML('afterbegin', '<div class="ambient-fx" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>');
 
@@ -236,14 +244,14 @@ document.querySelectorAll('[data-minutes]').forEach(b=>b.addEventListener('click
 $('#command-open').addEventListener('click',()=>{showModal(commandModal);$('#command-search').value='';filterCommands('');$('#command-search').focus();});
 $('#theme-toggle').addEventListener('click',()=>{document.body.classList.toggle('aurora-mode');toast(document.body.classList.contains('aurora-mode')?'Aurora glow enabled':'Classic mode enabled');});
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>hideModal($('#'+b.dataset.close))));
-[focusModal,commandModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModal(m);}));
+[focusModal,commandModal].forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModal(m);}));$('#task-detail-modal').addEventListener('click',e=>{if(e.target.id==='task-detail-modal')hideTaskDetails();});
 function filterCommands(q){const term=q.toLowerCase();document.querySelectorAll('#command-list button').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(term));}
 $('#command-search').addEventListener('input',e=>filterCommands(e.target.value));
 $('#command-list').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;hideModal(commandModal);if(b.dataset.go)go(b.dataset.go);if(b.dataset.action==='focus')showModal(focusModal);});
 document.addEventListener('keydown',e=>{
  const tag=document.activeElement?.tagName;
  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();showModal(commandModal);$('#command-search').value='';filterCommands('');$('#command-search').focus();return;}
- if(e.key==='Escape'){hideModal(focusModal);hideModal(commandModal);return;}
+ if(e.key==='Escape'){hideModal(focusModal);hideModal(commandModal);hideTaskDetails();return;}
  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;
  const key=e.key.toLowerCase();
  if(key==='f'){showModal(focusModal);}
