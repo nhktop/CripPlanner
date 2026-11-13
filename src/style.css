@@ -530,3 +530,35 @@ body[data-theme="aurora"]{--bg:#071014;--surface:#101c22;--surface-2:#15262b;--p
 .switch-time-btn:hover{border-color:#8cecff;background:linear-gradient(110deg,#3a3279,#1b5570)}
 @media(max-width:1000px){.homework-form{grid-template-columns:repeat(2,minmax(0,1fr))}.homework-form>input{grid-column:1/-1}}
 @media(max-width:620px){.homework-form{grid-template-columns:1fr}.homework-form>input{grid-column:auto}}
+
+
+/* HABITS, PERSONAL SETTINGS, AND FOCUS MODE */
+:root{--user-accent:#8b72f6}
+.nav-item[data-page="habits"]>span,.nav-item[data-page="settings"]>span{font-size:16px}
+.habit-form{display:grid;grid-template-columns:minmax(180px,1fr) minmax(140px,.4fr) auto;gap:10px;align-items:center}
+.habit-form input,.habit-form select,.settings-panel input:not([type="checkbox"]),.settings-panel select{width:100%;min-width:0;padding:11px 12px;border:1px solid #78bfff35;border-radius:10px;background:#09172d;color:#eef8ff}
+.habit-row{display:flex;align-items:center;gap:13px;padding:14px 2px;border-bottom:1px solid rgba(128,191,255,.16)}
+.habit-row:last-child{border-bottom:0}
+.habit-check{width:35px;height:35px;flex:0 0 35px;border:1px solid #9d8aff75;border-radius:11px;background:#211d43;color:#cfc5ff;font-size:19px;cursor:pointer}
+.habit-check.is-done{border-color:#68e6c0;background:#174a49;color:#a5ffe4;box-shadow:0 0 18px #55d9b52b}
+.habit-info{flex:1;min-width:0;display:grid;gap:4px}
+.habit-info strong{color:#f1f5ff;font-size:13px}
+.habit-info small{color:#9aafd0;font-size:10px}
+.settings-panel{padding:22px}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;max-width:760px}
+.settings-grid label{display:grid;gap:7px;color:#a9bfdc;font-size:11px}
+.settings-grid input[type="color"]{height:44px;padding:4px;cursor:pointer}
+.settings-divider{height:1px;margin:22px 0;border-top:1px solid rgba(128,191,255,.17)}
+.weekday-picks{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0 20px}
+.weekday-picks label{display:flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid #78bfff35;border-radius:10px;background:#0b1830;color:#d9eaff;font-size:11px;cursor:pointer}
+.weekday-picks input{accent-color:var(--user-accent);width:15px;height:15px}
+.settings-spacing{margin-bottom:18px}
+.settings-save{min-width:190px}
+.focus-task-picker{display:grid;gap:7px;width:min(100%,360px);margin:18px auto 8px;text-align:left}
+.focus-task-picker label{color:#a9bfdc;font-size:11px}
+.focus-task-picker select{width:100%;padding:11px 12px;border:1px solid #8d8aff55;border-radius:10px;background:#0b1830;color:#f1edff}
+.focus-task-picker small{color:#91a9c9;font-size:10px}
+.focus-mode-label{text-align:center;color:#b8a5ff;letter-spacing:1.4px}
+.timer-ring{box-shadow:0 0 0 1px color-mix(in srgb,var(--user-accent) 50%,transparent),0 0 42px color-mix(in srgb,var(--user-accent) 25%,transparent)}
+.primary-btn:focus-visible,.habit-check:focus-visible,.settings-panel input:focus-visible,.settings-panel select:focus-visible{outline:2px solid var(--user-accent);outline-offset:3px}
+@media(max-width:700px){.habit-form,.settings-grid{grid-template-columns:1fr}.habit-form button{width:100%}.settings-panel{padding:17px}}
