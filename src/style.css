@@ -463,3 +463,12 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .task-reward{display:flex;align-items:center;gap:9px;margin:20px 0;padding:15px;border:1px solid #a98aff55;border-radius:12px;background:linear-gradient(110deg,#2b2860aa,#17425aaa);color:#b8f3ff;font-size:15px;font-weight:800;box-shadow:0 0 25px #7e68ff16}
 .task-detail-modal .primary-btn{width:100%;min-height:46px}
 @media(max-width:620px){.points-pill{padding:7px 9px;font-size:10px}.task-detail-modal{padding:23px}}
+
+
+/* WEEKLY REPEAT TASK CONTROLS */
+.repeat-option{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 11px;border:1px solid #8b8aff45;border-radius:11px;background:linear-gradient(120deg,#142e4b,#29204b);color:#cceeff;font-size:11px;font-weight:700;white-space:nowrap}
+.repeat-option input{width:16px;height:16px;accent-color:#8c79ff;cursor:pointer}
+.stop-repeat-btn{width:100%;margin-top:10px;border-color:#f18bbd55;background:linear-gradient(110deg,#48223f,#34204d);color:#ffd1e6}
+.stop-repeat-btn:hover{border-color:#ff9bc9;background:linear-gradient(110deg,#63304e,#44285f)}
+@media(max-width:1100px){.task-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.task-form{grid-template-columns:1fr 1fr}.repeat-option{grid-column:1/-1}}
