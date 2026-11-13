@@ -67,6 +67,7 @@ function saveAll(){store.set('tasks',tasks);store.set('events',events);store.set
 function go(page){currentPage=page;$('.nav-item.active')?.classList.remove('active');$(`[data-page="${page}"]`)?.classList.add('active');$('#crumb').textContent=page.toUpperCase();render(page);}
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-page]'); if(nav) go(nav.dataset.page);
+ const switchTime=e.target.closest('[data-switch-time]');if(switchTime){switchTaskTime(switchTime.dataset.switchTime);return;}
  const openTask=e.target.closest('[data-open-task]'); if(openTask){openTaskDetails(openTask.dataset.openTask);return;}
  const cancelTask=e.target.closest('[data-cancel-task]');if(cancelTask){cancelSelectedTask();return;}
  const complete=e.target.closest('[data-complete-task]'); if(complete){completeSelectedTask();return;}
@@ -75,7 +76,7 @@ document.addEventListener('click',e=>{
  const del=e.target.closest('[data-delete]');if(del){tasks=tasks.filter(x=>x.id!==del.dataset.delete);saveAll();render('tasks');}
  const pdel=e.target.closest('[data-project-delete]');if(pdel){projects=projects.filter(x=>x.id!==pdel.dataset.projectDelete);saveAll();render('projects');}
 });
-function taskMarkup(t){const steps=Array.isArray(t.subtasks)?t.subtasks:[];const pct=steps.length?Math.round(steps.filter(x=>x.done).length/steps.length*100):Number(t.progress)||0;const due=t.date?Math.round((new Date(t.date+'T12:00:00')-new Date(localDate()+'T12:00:00'))/86400000):null;const dueText=due===null?'No due date':due<0?Math.abs(due)+'d overdue':due===0?'Due today':due+'d left';return `<div class="task-row ${t.done?'is-done':''} ${t.cancelled?'is-cancelled':''}" data-open-task="${t.id}" role="button" tabindex="0" aria-label="Open task ${esc(t.title)}"><button class="check ${t.done?'checked':''}" data-open-task="${t.id}" title="Open task">${t.done?'✓':t.cancelled?'–':''}</button><div class="task-info"><strong>${esc(t.title)}${t.cancelled?' · CANCELLED':''}</strong><small>${t.date?new Date(t.date+'T12:00:00').toLocaleDateString([], {month:'short',day:'numeric'}):'No due date'} · ${dueText} · ${esc(t.time||'Unscheduled')} · ${Number(t.duration)||30} min${t.subject?' · '+esc(t.subject):''}${t.source==='email'?' · EMAIL':''}${t.repeatWeekly?' · ↻ WEEKLY':''}${steps.length?' · '+pct+'% done':''}</small>${steps.length?`<span class="task-mini-progress"><i style="width:${pct}%"></i></span>`:''}</div><span class="priority ${t.priority||'normal'}">${t.priority||'normal'}</span><button class="icon-btn" data-delete="${t.id}" title="Delete task">×</button></div>`;}
+function taskMarkup(t){const steps=Array.isArray(t.subtasks)?t.subtasks:[];const pct=steps.length?Math.round(steps.filter(x=>x.done).length/steps.length*100):Number(t.progress)||0;const dueDate=t.dueDate||t.date;const due=dueDate?Math.round((new Date(dueDate+'T12:00:00')-new Date(localDate()+'T12:00:00'))/86400000):null;const dueText=due===null?'No due date':due<0?Math.abs(due)+'d overdue':due===0?'Due today':due+'d left';return `<div class="task-row ${t.done?'is-done':''} ${t.cancelled?'is-cancelled':''}" data-open-task="${t.id}" role="button" tabindex="0" aria-label="Open task ${esc(t.title)}"><button class="check ${t.done?'checked':''}" data-open-task="${t.id}" title="Open task">${t.done?'✓':t.cancelled?'–':''}</button><div class="task-info"><strong>${esc(t.title)}${t.cancelled?' · CANCELLED':''}</strong><small>${dueDate?new Date(dueDate+'T12:00:00').toLocaleDateString([], {month:'short',day:'numeric'}):'No due date'} · ${dueText} · ${esc(t.time||'Unscheduled')} · ${Number(t.duration)||30} min${t.subject?' · '+esc(t.subject):''}${t.source==='email'?' · EMAIL':''}${t.repeatWeekly?' · ↻ WEEKLY':''}${steps.length?' · '+pct+'% done':''}</small>${steps.length?`<span class="task-mini-progress"><i style="width:${pct}%"></i></span>`:''}</div><span class="priority ${t.priority||'normal'}">${t.priority||'normal'}</span><button class="icon-btn" data-delete="${t.id}" title="Delete task">×</button></div>`;}
 function streakCount(){const set=new Set(completedDays);let d=new Date();if(!set.has(localDate(d))){d.setDate(d.getDate()-1);if(!set.has(localDate(d)))return 0;}let count=0;while(set.has(localDate(d))){count++;d.setDate(d.getDate()-1);}return count;}
 function cancelSelectedTask(){const t=tasks.find(x=>x.id===selectedTaskId);if(!t||t.done||t.cancelled)return;t.cancelled=true;saveAll();hideTaskDetails();render(currentPage);toast('Task cancelled — no points awarded');}
 function taskPoints(t){const mins=Number(t.duration)||30;return Math.max(5,Math.round(mins/15)*5)+(t.priority==='high'?5:0);}
@@ -94,21 +95,28 @@ function addEventFromForm(form){const f=new FormData(form);events.push({id:crypt
 function minutes(value){const [h,m]=String(value||'00:00').split(':').map(Number);return h*60+(m||0);}
 function clock(value){return String(Math.floor(value/60)).padStart(2,'0')+':'+String(value%60).padStart(2,'0');}
 function overlaps(a,b,c,d){return a<d&&c<b;}
+function isWeekend(day){const d=new Date(day+'T12:00:00').getDay();return d===0||d===6;}
+function dayWindow(day){return {start:Math.max(minutes(plannerPrefs.start),isWeekend(day)?0:16*60),end:minutes(plannerPrefs.end)};}
+function dayBlocks(day,excludeId){return [...events.filter(e=>e.date===day&&e.time).map(e=>({start:minutes(e.time),end:minutes(e.time)+(Number(e.duration)||60)})),...tasks.filter(t=>!t.done&&!t.cancelled&&t.id!==excludeId&&t.date===day&&t.time).map(t=>({start:minutes(t.time),end:minutes(t.time)+(Number(t.duration)||30)}))];}
+function findFreeSlot(day,duration,excludeId){const w=dayWindow(day);if(w.end<=w.start)return -1;const blocks=dayBlocks(day,excludeId);for(let candidate=w.start;candidate+duration<=w.end;candidate+=15){if(!blocks.some(x=>overlaps(candidate,candidate+duration,x.start,x.end)))return candidate;}return -1;}
 function buildSmartPlan(day){
- const start=minutes(plannerPrefs.start),end=minutes(plannerPrefs.end);
- if(end<=start){toast('End time must be later than start time');return {placed:0,left:tasks.filter(t=>!t.done&&!t.time).length};}
- const eligible=tasks.filter(t=>!t.done&&!t.cancelled&&(!t.date||t.date<=day));
+ const w=dayWindow(day),end=w.end;
+ if(end<=w.start){toast(isWeekend(day)?'End time must be later than start time':'School-day homework can only be scheduled after 4 PM, and your end time must be later');return {placed:0,left:tasks.filter(t=>!t.done&&!t.cancelled&&t.homework).length};}
+ const eligible=tasks.filter(t=>!t.done&&!t.cancelled&&(!t.homework||!t.dueDate||t.dueDate>=day)&&(!t.date||t.date<=day));
  const fixed=eligible.filter(t=>t.date===day&&t.time);
  const pending=eligible.filter(t=>!(t.date===day&&t.time));
- const blocks=[...events.filter(e=>e.date===day&&e.time).map(e=>({start:minutes(e.time),end:minutes(e.time)+(Number(e.duration)||60)})),...fixed.map(t=>({start:minutes(t.time),end:minutes(t.time)+(Number(t.duration)||30)}))];
- pending.sort((a,b)=>({high:0,normal:1,low:2}[a.priority||'normal']-({high:0,normal:1,low:2}[b.priority||'normal']) )||String(a.date||'9999-12-31').localeCompare(String(b.date||'9999-12-31')));
+ const blocks=dayBlocks(day);
+ pending.sort((a,b)=>({high:0,normal:1,low:2}[a.priority||'normal']-({high:0,normal:1,low:2}[b.priority||'normal']) )||String(a.dueDate||a.date||'9999-12-31').localeCompare(String(b.dueDate||b.date||'9999-12-31')));
  let placed=0,left=0;
- for(const t of pending){const duration=Math.max(15,Number(t.duration)||30);let slot=-1;
-  for(let candidate=start;candidate+duration<=end;candidate+=15){if(!blocks.some(x=>overlaps(candidate,candidate+duration,x.start,x.end))){slot=candidate;break;}}
-  if(slot<0){left++;continue;}
-  t.date=day;t.time=clock(slot);blocks.push({start:slot,end:slot+duration});placed++;
- }
- return {placed,left};
+ for(const t of pending){const duration=Math.max(15,Number(t.duration)||30);let slot=-1;for(let candidate=w.start;candidate+duration<=end;candidate+=15){if(!blocks.some(x=>overlaps(candidate,candidate+duration,x.start,x.end))){slot=candidate;break;}}
+  if(slot<0){left++;continue;}t.date=day;t.time=clock(slot);blocks.push({start:slot,end:slot+duration});placed++;
+ }return {placed,left};
+}
+function switchTaskTime(id){
+ const t=tasks.find(x=>x.id===id);if(!t||t.done||t.cancelled)return;const duration=Math.max(15,Number(t.duration)||30);const current=t.date||planDay;const dates=[current];let d=new Date(current+'T12:00:00');
+ for(let i=1;i<=14;i++){d.setDate(d.getDate()+1);const next=localDate(d);if(t.dueDate&&next>t.dueDate)break;dates.push(next);}
+ for(const day of dates){const slot=findFreeSlot(day,duration,id);if(slot>=0){t.date=day;t.time=clock(slot);saveAll();render('smart-plan');toast('Homework moved to '+new Date(day+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+' at '+t.time);return;}}
+ toast('No other free slot found before the due date. Extend your availability or move another task first.');
 }
 function renderWeekBoard(days){
  const hours=Array.from({length:14},(_,i)=>i+8);
@@ -181,13 +189,14 @@ function render(page='dashboard'){
  $('#event-form-bottom').addEventListener('submit',e=>{e.preventDefault();addEventFromForm(e.target);});
  $('#event-form')?.addEventListener('submit',e=>{e.preventDefault();addEventFromForm(e.target);});
  } else if(page==='smart-plan'){
- const candidates=tasks.filter(t=>!t.done&&!t.cancelled&&(!t.date||t.date<=planDay));
+ const candidates=tasks.filter(t=>!t.done&&!t.cancelled&&(!t.homework||!t.dueDate||t.dueDate>=planDay)&&(!t.date||t.date<=planDay));
  const planned=candidates.filter(t=>t.date===planDay&&t.time).sort((a,b)=>a.time.localeCompare(b.time));
  const unscheduled=candidates.filter(t=>!t.time||t.date!==planDay);
  $('#page').innerHTML=`<div class="page-heading"><div><div class="eyebrow">AUTOMATIC TIME BLOCKING</div><h1>Smart daily plan</h1><p>Choose your available hours and let CripPlanner fit your tasks around existing events.</p></div><div class="count-chip">${planned.length} BLOCKED</div></div>
  <div class="panel planner-settings"><div class="panel-head"><div><h2>Your availability</h2><p>Set the hours you can work on this day</p></div></div><div class="planner-controls"><label>Plan date<input id="plan-day" type="date" value="${planDay}"></label><label>Available from<input id="available-start" type="time" value="${plannerPrefs.start}"></label><label>Available until<input id="available-end" type="time" value="${plannerPrefs.end}"></label><button class="primary-btn" id="generate-plan">Build my day ✦</button></div><p class="helper-copy">The planner respects existing calendar events and tasks with a chosen start time. It schedules higher-priority and nearer-deadline tasks first.</p></div>
- <div class="planner-columns"><div class="panel"><div class="panel-head"><div><h2>Your suggested day</h2><p>${planned.length} task blocks on ${new Date(planDay+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'})}</p></div></div>${planned.length?planned.map(t=>`<div class="plan-row"><span class="plan-time">${esc(t.time)}</span><div><strong>${esc(t.title)}</strong><small>${Number(t.duration)||30} min · ${esc(t.priority||'normal')} priority</small></div><button class="icon-btn" data-clear-time="${t.id}" title="Remove from schedule">↶</button></div>`).join(''):'<div class="empty">No time blocks yet. Build your day to schedule eligible tasks.</div>'}</div>
+ <div class="panel homework-capture"><div class="panel-head"><div><h2>＋ Add homework</h2><p>CripPlanner will fit it into free time before the deadline.</p></div></div><form id="homework-form" class="homework-form"><input name="title" placeholder="Homework / assignment name" required maxlength="120"><label>Due date<input name="dueDate" type="date" required></label><label>Time needed<select name="duration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option></select></label><label>Priority<select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select></label><button class="primary-btn">Add homework +</button></form><p class="helper-copy">Monday–Friday: scheduled no earlier than 4:00 PM. Weekends: uses your full available window.</p></div><div class="planner-columns"><div class="panel"><div class="panel-head"><div><h2>Your suggested day</h2><p>${planned.length} task blocks on ${new Date(planDay+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'})}</p></div></div>${planned.length?planned.map(t=>`<div class="plan-row"><span class="plan-time">${esc(t.time)}</span><div><strong>${esc(t.title)}</strong><small>${Number(t.duration)||30} min · ${esc(t.priority||'normal')} priority</small></div><button class="secondary-btn switch-time-btn" data-switch-time="${t.id}" title="Find another free time">Switch time ↻</button></div>`).join(''):'<div class="empty">No time blocks yet. Build your day to schedule eligible tasks.</div>'}</div>
  <div class="panel"><div class="panel-head"><div><h2>Needs scheduling</h2><p>${unscheduled.length} tasks without a block for this date</p></div></div>${unscheduled.map(taskMarkup).join('')||'<div class="empty">Everything eligible is scheduled.</div>'}</div></div>`;
+ $('#homework-form').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);const dueDate=f.get('dueDate');if(dueDate<localDate()){toast('Choose a future due date');return;}const task={id:crypto.randomUUID(),title:f.get('title'),date:'',dueDate,homework:true,time:'',duration:Number(f.get('duration'))||30,priority:f.get('priority'),subject:'',progress:0,subtasks:[],done:false};tasks.unshift(task);let placed=false;for(let d=new Date(localDate()+'T12:00:00');d<=new Date(dueDate+'T12:00:00');d.setDate(d.getDate()+1)){const day=localDate(d),slot=findFreeSlot(day,task.duration,task.id);if(slot>=0){task.date=day;task.time=clock(slot);placed=true;break;}}saveAll();render('smart-plan');toast(placed?'Homework added and scheduled automatically':'Homework added, but no free slot was found before the due date');});
  $('#plan-day').onchange=e=>{planDay=e.target.value||localDate();render('smart-plan');};
  $('#available-start').onchange=e=>{plannerPrefs.start=e.target.value;store.set('plannerPrefs',plannerPrefs);};
  $('#available-end').onchange=e=>{plannerPrefs.end=e.target.value;store.set('plannerPrefs',plannerPrefs);};
