@@ -441,3 +441,10 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .subhead{margin:20px 0 10px;color:#dceeff;font-size:13px}
 @media(max-width:900px){.planner-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.integration-grid,.planner-columns{grid-template-columns:1fr}}
 @media(max-width:620px){.calendar-toolbar{flex-wrap:wrap}.planner-controls{grid-template-columns:1fr 1fr}.form-pair{grid-template-columns:1fr}.integration-card{padding:18px}}
+
+
+/* Task duration controls and dashboard planner shortcut */
+.task-form{grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;align-items:center}
+.welcome-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+@media(max-width:1100px){.task-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.task-form{grid-template-columns:1fr 1fr}.welcome-actions{align-items:flex-start}.welcome-actions .date-chip{display:none}}
