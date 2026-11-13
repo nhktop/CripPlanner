@@ -61,7 +61,7 @@ function weather() {
     } catch { const el=$('#weather');if(el)el.innerHTML='<span class="weather-icon">☁</span><div><strong>Weather unavailable</strong><small>Could not load forecast</small></div>'; }
   }, () => {const el=$('#weather');if(el)el.innerHTML='<span class="weather-icon">☀</span><div><strong>Location not shared</strong><small>Allow location for local weather</small></div>';}, {timeout:8000});
 }
-function saveAll(){store.set('tasks',tasks);store.set('events',events);store.set('projects',projects);store.set('plannerPrefs',plannerPrefs);$('#task-count').textContent=tasks.filter(t=>!t.done).length;const xp=$('#points-pill');if(xp)xp.textContent='✦ '+points+' XP';}
+function saveAll(){store.set('tasks',tasks);store.set('events',events);store.set('projects',projects);store.set('plannerPrefs',plannerPrefs);$('#task-count').textContent=tasks.filter(t=>!t.done&&!t.cancelled).length;const xp=$('#points-pill');if(xp)xp.textContent='✦ '+points+' XP';}
 function go(page){currentPage=page;$('.nav-item.active')?.classList.remove('active');$(`[data-page="${page}"]`)?.classList.add('active');$('#crumb').textContent=page.toUpperCase();render(page);}
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-page]'); if(nav) go(nav.dataset.page);
@@ -92,7 +92,7 @@ function overlaps(a,b,c,d){return a<d&&c<b;}
 function buildSmartPlan(day){
  const start=minutes(plannerPrefs.start),end=minutes(plannerPrefs.end);
  if(end<=start){toast('End time must be later than start time');return {placed:0,left:tasks.filter(t=>!t.done&&!t.time).length};}
- const eligible=tasks.filter(t=>!t.done&&(!t.date||t.date<=day));
+ const eligible=tasks.filter(t=>!t.done&&!t.cancelled&&(!t.date||t.date<=day));
  const fixed=eligible.filter(t=>t.date===day&&t.time);
  const pending=eligible.filter(t=>!(t.date===day&&t.time));
  const blocks=[...events.filter(e=>e.date===day&&e.time).map(e=>({start:minutes(e.time),end:minutes(e.time)+(Number(e.duration)||60)})),...fixed.map(t=>({start:minutes(t.time),end:minutes(t.time)+(Number(t.duration)||30)}))];
@@ -133,14 +133,15 @@ function importICS(text){
 }
 function exportICS(){
  const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//CripPlanner//EN'];
- const entries=[...events.map(e=>({...e,kind:'event'})),...tasks.filter(t=>!t.done&&t.date&&t.time).map(t=>({...t,kind:'task',title:'Task: '+t.title,duration:Number(t.duration)||30}))];
+ const entries=[...events.map(e=>({...e,kind:'event'})),...tasks.filter(t=>!t.done&&!t.cancelled&&t.date&&t.time).map(t=>({...t,kind:'task',title:'Task: '+t.title,duration:Number(t.duration)||30}))];
  entries.forEach((e,i)=>{const day=(e.date||'').replace(/-/g,'');if(!/^\d{8}$/.test(day))return;const start=e.time?day+'T'+e.time.replace(':','')+'00':day;lines.push('BEGIN:VEVENT','UID:cripplanner-'+i+'-'+day+'@local','DTSTAMP:'+stamp,e.time?'DTSTART:'+start:'DTSTART;VALUE=DATE:'+day,'SUMMARY:'+String(e.title).replace(/[\\;,]/g,' ').replace(/\n/g,' '));if(e.time){const end=minutes(e.time)+(Number(e.duration)||60);lines.push('DURATION:PT'+Math.floor((Number(e.duration)||60)/60)+'H'+((Number(e.duration)||60)%60)+'M');}lines.push('END:VEVENT');});
  lines.push('END:VCALENDAR');const blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cripplanner-calendar.ics';a.click();URL.revokeObjectURL(url);
 }
 
 function render(page='dashboard'){
  const open=tasks.filter(t=>!t.done&&!t.cancelled), done=tasks.filter(t=>t.done), cancelled=tasks.filter(t=>t.cancelled);
- const completion=tasks.length?Math.round(done.length/tasks.length*100):0;
+ const activeTotal=tasks.filter(t=>!t.cancelled).length;
+ const completion=activeTotal?Math.round(done.length/activeTotal*100):0;
  if(page==='dashboard'){
  $('#page').innerHTML=`
  <div class="welcome"><div><div class="eyebrow">YOUR PERSONAL CONTROL PANEL</div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}.</h1><p>Everything you need, in one place.</p></div><div class="welcome-actions"><button class="primary-btn" data-page="smart-plan">✦ Plan my day</button><div class="date-chip">✦ &nbsp;${dateLong()}</div></div></div>
