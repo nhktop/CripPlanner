@@ -466,9 +466,10 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opac
 
 
 /* WEEKLY REPEAT TASK CONTROLS */
-.repeat-option{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 11px;border:1px solid #8b8aff45;border-radius:11px;background:linear-gradient(120deg,#142e4b,#29204b);color:#cceeff;font-size:11px;font-weight:700;white-space:nowrap}
-.repeat-option input{width:16px;height:16px;accent-color:#8c79ff;cursor:pointer}
+.task-form{display:grid;grid-template-columns:minmax(180px,2fr) repeat(4,minmax(90px,1fr)) auto auto;align-items:center}
+.repeat-option{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 12px;border:1px solid #8b8aff70;border-radius:11px;background:linear-gradient(120deg,#142e4b,#29204b);color:#cceeff;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}
+.task-form .repeat-option input{display:block;flex:0 0 16px;width:16px;min-width:16px;height:16px;margin:0;padding:0;border:0;border-radius:3px;background:transparent;box-shadow:none;accent-color:#8c79ff;cursor:pointer}
 .stop-repeat-btn{width:100%;margin-top:10px;border-color:#f18bbd55;background:linear-gradient(110deg,#48223f,#34204d);color:#ffd1e6}
 .stop-repeat-btn:hover{border-color:#ff9bc9;background:linear-gradient(110deg,#63304e,#44285f)}
-@media(max-width:1100px){.task-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:620px){.task-form{grid-template-columns:1fr 1fr}.repeat-option{grid-column:1/-1}}
+@media(max-width:1100px){.task-form{grid-template-columns:repeat(3,minmax(0,1fr))}.task-form .repeat-option{justify-self:start}}
+@media(max-width:620px){.task-form{grid-template-columns:1fr 1fr}.task-form>input:first-child,.task-form .repeat-option,.task-form>button{grid-column:1/-1}.task-form .repeat-option{justify-self:start}}
