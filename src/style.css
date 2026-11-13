@@ -562,3 +562,8 @@ body[data-theme="aurora"]{--bg:#071014;--surface:#101c22;--surface-2:#15262b;--p
 .timer-ring{box-shadow:0 0 0 1px color-mix(in srgb,var(--user-accent) 50%,transparent),0 0 42px color-mix(in srgb,var(--user-accent) 25%,transparent)}
 .primary-btn:focus-visible,.habit-check:focus-visible,.settings-panel input:focus-visible,.settings-panel select:focus-visible{outline:2px solid var(--user-accent);outline-offset:3px}
 @media(max-width:700px){.habit-form,.settings-grid{grid-template-columns:1fr}.habit-form button{width:100%}.settings-panel{padding:17px}}
+
+/* User-selected accent colour */
+.nav-item.active{border-color:color-mix(in srgb,var(--user-accent) 58%,transparent);box-shadow:inset 3px 0 var(--user-accent),0 0 25px color-mix(in srgb,var(--user-accent) 18%,transparent)}
+.primary-btn{border-color:color-mix(in srgb,var(--user-accent) 60%,#ffffff);box-shadow:0 9px 27px color-mix(in srgb,var(--user-accent) 24%,transparent),inset 0 1px rgba(255,255,255,.5)}
+.habit-check.is-done{border-color:var(--user-accent);box-shadow:0 0 16px color-mix(in srgb,var(--user-accent) 26%,transparent)}
